@@ -31,12 +31,20 @@ import java.util.HashMap;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+
     private Toolbar mToolbar;
+    // ジャンル選択用
     private int mGenre = 0;
+    // お気に入り一覧用
+    private int mLike = 5;
+
 
     // --- ここから ---
     private DatabaseReference mDatabaseReference;
     private DatabaseReference mGenreRef;
+
+    // Firebaseからお気に入りを取得する変数
+    private DatabaseReference mlikeRef;
     private ListView mListView;
     private ArrayList<Question> mQuestionArrayList;
     private QuestionsListAdapter mAdapter;
@@ -70,7 +78,7 @@ public class MainActivity extends AppCompatActivity
                 }
             }
 
-            Question question = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, bytes, answerArrayList);
+            Question question = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, mLike, bytes, answerArrayList);
             mQuestionArrayList.add(question);
             mAdapter.notifyDataSetChanged();
         }
@@ -228,12 +236,14 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_compter) {
             mToolbar.setTitle("コンピューター");
             mGenre = 4;
+        } else if (id == R.id.nav_like) {
+            mToolbar.setTitle("お気に入り一覧");
+            mLike = 5;
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
 
-        // --- ここから ---
         // 質問のリストをクリアしてから再度Adapterにセットし、AdapterをListViewにセットし直す
         mQuestionArrayList.clear();
         mAdapter.setQuestionArrayList(mQuestionArrayList);
@@ -245,7 +255,16 @@ public class MainActivity extends AppCompatActivity
         }
         mGenreRef = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(mGenre));
         mGenreRef.addChildEventListener(mEventListener);
-        // --- ここまで追加する ---
+
+        // お気に入りにリスナーを登録する
+        if (mlikeRef != null) {
+            mlikeRef.removeEventListener(mEventListener);
+        }
+        // Firebaseからお気に入りを取得
+        mlikeRef = mDatabaseReference.child(Const.LikesPATH).child(String.valueOf(mLike));
+        // お気に入りが追加された時に呼ばれるメソッド
+        mlikeRef.addChildEventListener(mEventListener);
+
         return true;
     }
 }

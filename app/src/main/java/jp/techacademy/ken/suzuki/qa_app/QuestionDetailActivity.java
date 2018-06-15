@@ -33,8 +33,8 @@ public class QuestionDetailActivity extends AppCompatActivity {
     // お気に入りボタンの変数を定義
     private Button mLikeButton;
 
-    // お気に入りの変数を定義
-    private Like mLike;
+    // 画面を表示した時に、isLikeにお気に入りかどうかというデータをGetterメソッドによって保持。（フィールドがboolean型の場合、Getterメソッドの名前をis + フィールド名とします。）
+    private boolean isLike = false;
 
     // ログイン済みのユーザーを取得する
     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -83,10 +83,47 @@ public class QuestionDetailActivity extends AppCompatActivity {
         }
     };
 
+    // データに追加・変化があった時に受け取るChildEventListenerを作成
+    private ChildEventListener mFavoriteListener = new ChildEventListener() {
+
+        // Firebaseにお気に入りが追加された時に呼ばれるメソッド
+        @Override
+        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            isLike = true;
+            if (mLikeButton != null) {
+                mLikeButton.setText("解除");
+            }
+        }
+
+        @Override
+        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+        }
+
+        @Override
+        public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+        }
+
+        @Override
+        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_question_detail);
+
+        // 渡ってきたQuestionのオブジェクトを保持する
+        Bundle extras = getIntent().getExtras();
+        mQuestion = (Question) extras.get("question");
 
         // お気に入りボタンの設定
         mLikeButton = (Button)findViewById(R.id.like_button);
@@ -99,20 +136,23 @@ public class QuestionDetailActivity extends AppCompatActivity {
             mLikeButton.setVisibility(View.VISIBLE);
         }
 
+        // Firebaseを参照
+        DatabaseReference dataBaseReference = FirebaseDatabase.getInstance().getReference();
+        // Firebaseからユーザーにお気に入りされている質問を likeRef 変数に代入。
+        final DatabaseReference likeRef = dataBaseReference.child(Const.LikesPATH).child(user.getUid()).child(mQuestion.getQuestionUid());
+        // Firebaseにお気に入りを追加するイベントリスナーを定義
+        likeRef.addChildEventListener(mFavoriteListener);
+
         // お気に入りボタンをクリックした時の処理
         mLikeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-            // データベース(Constファイル)にお気に入りを保存
-            DatabaseReference dataBaseReference = FirebaseDatabase.getInstance().getReference();
-            // Firebaseから質問がお気に入り登録されているかのデータを取得。お気に入りされているユーザーIDの質問を取得し、変数に代入。
-            DatabaseReference likeRef = dataBaseReference.child(Const.LikesPATH).child(user.getUid()).child(mQuestion.getQuestionUid());
-            //DatabaseReference likeRef = dataBaseReference.child(Const.ContentsPATH).child(String.valueOf(mQuestion.getGenre())).child(mQuestion.getQuestionUid()).child(Const.LikesPATH);
-
                 Map<String, String> data = new HashMap<String, String>();
 
-                if (likeRef != null) {
+
+                // isLikeがfalseなら（お気に入りされていないなら）
+                if (!isLike) {
 
                     // UIDをFirebaseに登録
                     data.put("uid", FirebaseAuth.getInstance().getCurrentUser().getUid());
@@ -121,7 +161,7 @@ public class QuestionDetailActivity extends AppCompatActivity {
                     // Preferenceから名前を取る
                     SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                     String name = sp.getString(Const.NameKEY, "");
-                    // nameを保存
+                    // nameをFirebaseに登録
                     data.put("name", name);
 
 
@@ -135,21 +175,21 @@ public class QuestionDetailActivity extends AppCompatActivity {
 
                     // ボタンのTextを「解除」に変更
                     mLikeButton.setText("解除");
-                    // お気に入りのdataをFirebaseに保存
+                    // Firebaseにお気に入りを追加
                     likeRef.setValue(data);
+                    // isLike 変数にお気に入りを追加
+                    isLike = true;
                 }
                 else {
                     // ボタンのTextを「お気に入り」に変更
                     mLikeButton.setText("お気に入り");
-                    // お気に入りのdataをFirebaseに保存
+                    // Firebaseからお気に入りを削除
                     likeRef.removeValue();
+                    // isLike 変数からお気に入りを削除
+                    isLike = false;
                 }
             }
         });
-
-        // 渡ってきたQuestionのオブジェクトを保持する
-        Bundle extras = getIntent().getExtras();
-        mQuestion = (Question) extras.get("question");
 
         setTitle(mQuestion.getTitle());
 
@@ -181,7 +221,6 @@ public class QuestionDetailActivity extends AppCompatActivity {
             }
         });
 
-        DatabaseReference dataBaseReference = FirebaseDatabase.getInstance().getReference();
         mAnswerRef = dataBaseReference.child(Const.ContentsPATH).child(String.valueOf(mQuestion.getGenre())).child(mQuestion.getQuestionUid()).child(Const.AnswersPATH);
         mAnswerRef.addChildEventListener(mEventListener);
     }

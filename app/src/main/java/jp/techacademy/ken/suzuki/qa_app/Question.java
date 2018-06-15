@@ -10,6 +10,8 @@ public class Question implements Serializable {
     private String mUid;
     private String mQuestionUid;
     private int mGenre;
+    // お気に入りの変数
+    private int mLike;
     private byte[] mBitmapArray;
     private ArrayList<Answer> mAnswerArrayList;
 
@@ -36,6 +38,10 @@ public class Question implements Serializable {
         return mGenre;
     }
 
+    public int getLike() {
+        return mLike;
+    }
+
     public byte[] getImageBytes() {
         return mBitmapArray;
     }
@@ -44,13 +50,14 @@ public class Question implements Serializable {
         return mAnswerArrayList;
     }
 
-    public Question(String title, String body, String name, String uid, String questionUid, int genre, byte[] bytes, ArrayList<Answer> answers) {
+    public Question(String title, String body, String name, String uid, String questionUid, int genre, int like, byte[] bytes, ArrayList<Answer> answers) {
         mTitle = title;
         mBody = body;
         mName = name;
         mUid = uid;
         mQuestionUid = questionUid;
         mGenre = genre;
+        mLike = like;
         mBitmapArray = bytes.clone();
         mAnswerArrayList = answers;
     }
