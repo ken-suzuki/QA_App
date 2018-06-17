@@ -1,32 +1,40 @@
 package jp.techacademy.ken.suzuki.qa_app;
 
 import java.io.Serializable;
-import java.util.Date;
 
-import io.realm.RealmObject;
-import io.realm.annotations.PrimaryKey;
+public class Like implements Serializable {
+    // Firebaseから取得した質問
+    private String mBody;
 
-public class Like extends RealmObject implements Serializable {
-    private String like; // お気に入り
+    // Firebaseから取得したお気に入りしたユーザーの名前
+    private String mName;
 
-    // id をプライマリーキーとして設定
-    @PrimaryKey
-    private int id;
+    // Firebaseから取得したお気に入りしたユーザーのUID
+    private String mUid;
 
-    public String getTitle() {
-        return like;
+    // Firebaseから取得したお気に入りのUID
+    private String mLikeUid;
+
+    public Like(String body, String name, String uid, String likeUid) {
+        mBody = body;
+        mName = name;
+        mUid = uid;
+        mLikeUid = likeUid;
     }
 
-    public void setTitle(String title) {
-        this.like = like;
+    public String getBody() {
+        return mBody;
     }
 
-
-    public int getId() {
-        return id;
+    public String getName() {
+        return mName;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public String getUid() {
+        return mUid;
+    }
+
+    public String getLikeUid() {
+        return mLikeUid;
     }
 }

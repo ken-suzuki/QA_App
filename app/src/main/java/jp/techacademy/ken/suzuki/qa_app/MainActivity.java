@@ -42,11 +42,101 @@ public class MainActivity extends AppCompatActivity
     private ArrayList<Question> mQuestionArrayList;
     private QuestionsListAdapter mAdapter;
 
-    private ChildEventListener mEventListener = new ChildEventListener() {
+    // ログイン済みのユーザーを取得する
+    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+    // Firebaseから取得した質問のモデルクラスであるLikeのArrayList
+    private ArrayList<String> mLikeArrayList;
+
+    // Firebaseを参照
+    DatabaseReference dataBaseReference = FirebaseDatabase.getInstance().getReference();
+    // Firebaseからユーザーにお気に入りされているUIDを likeRef 変数に代入。
+    final DatabaseReference likeRef = dataBaseReference.child(Const.LikesPATH).child(user.getUid());
+
+    // データに追加・変化があった時に受け取るChildEventListener
+    private ChildEventListener mFavoriteListener = new ChildEventListener() {
+        @Override
+        // onChildAddedメソッドが要素が追加されたとき、つまりお気に入りした質問が追加された時に呼ばれるメソッド
+        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            HashMap likemap = (HashMap) dataSnapshot.getValue();
+
+            String title = (String) likemap.get("title");
+            String body = (String) likemap.get("body");
+            String name = (String) likemap.get("name");
+            String uid = (String) likemap.get("uid");
+            String imageString = (String) likemap.get("image");
+            byte[] bytes;
+            if (imageString != null) {
+                bytes = Base64.decode(imageString, Base64.DEFAULT);
+            } else {
+                bytes = new byte[0];
+            }
+
+            ArrayList<Answer> answerArrayList = new ArrayList<Answer>();
+            HashMap answerMap = (HashMap) likemap.get("answers");
+            if (answerMap != null) {
+                for (Object key : answerMap.keySet()) {
+                    HashMap temp = (HashMap) answerMap.get((String) key);
+                    String answerBody = (String) temp.get("body");
+                    String answerName = (String) temp.get("name");
+                    String answerUid = (String) temp.get("uid");
+                    Answer answer = new Answer(answerBody, answerName, answerUid, (String) key);
+                    answerArrayList.add(answer);
+                }
+            }
+
+            Question question = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, bytes, answerArrayList);
+            mLikeArrayList.add(question);
+            mAdapter.notifyDataSetChanged();
+        }
 
         @Override
-        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+        // onChildChangedメソッドは要素に変化があった時です。今回は質問に対して回答が投稿された時に呼ばれることとなります。
+        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
             HashMap map = (HashMap) dataSnapshot.getValue();
+
+            // 変更があったQuestionを探す
+            for (Question question: mQuestionArrayList) {
+                if (dataSnapshot.getKey().equals(question.getQuestionUid())) {
+                    // このアプリで変更がある可能性があるのは回答(Answer)のみ
+                    question.getAnswers().clear();
+                    HashMap answerMap = (HashMap) map.get("answers");
+                    if (answerMap != null) {
+                        for (Object key : answerMap.keySet()) {
+                            HashMap temp = (HashMap) answerMap.get((String) key);
+                            String answerBody = (String) temp.get("body");
+                            String answerName = (String) temp.get("name");
+                            String answerUid = (String) temp.get("uid");
+                            Answer answer = new Answer(answerBody, answerName, answerUid, (String) key);
+                            question.getAnswers().add(answer);
+                        }
+                    }
+
+                    mAdapter.notifyDataSetChanged();
+                }
+            }
+        }
+
+        @Override
+        public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+        }
+
+        @Override
+        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
+
+        private ChildEventListener mEventListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                HashMap map = (HashMap) dataSnapshot.getValue();
                 String title = (String) map.get("title");
                 String body = (String) map.get("body");
                 String name = (String) map.get("name");
@@ -75,7 +165,7 @@ public class MainActivity extends AppCompatActivity
                 Question question = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, bytes, answerArrayList);
                 mQuestionArrayList.add(question);
                 mAdapter.notifyDataSetChanged();
-        }
+            }
 
         @Override
         public void onChildChanged(DataSnapshot dataSnapshot, String s) {
@@ -118,7 +208,6 @@ public class MainActivity extends AppCompatActivity
 
         }
     };
-    // --- ここまで追加する ---
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -251,13 +340,13 @@ public class MainActivity extends AppCompatActivity
 
         if (mGenre < 5){
             mGenreRef = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(mGenre));
+            mGenreRef.addChildEventListener(mEventListener);
             }
             else {
             mGenreRef = mDatabaseReference.child(Const.ContentsPATH);
-
+            mGenreRef.addChildEventListener(mFavoriteListener);
         }
 
-        mGenreRef.addChildEventListener(mEventListener);
 
         return true;
     }
