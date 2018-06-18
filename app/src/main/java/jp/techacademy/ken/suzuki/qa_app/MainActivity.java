@@ -62,19 +62,6 @@ public class MainActivity extends AppCompatActivity
             // datebaseにあるデータの値をHashMapクラスに変換し変数に代入
             HashMap likemap = (HashMap) dataSnapshot.getValue();
 
-            // datebaseのデータからtitleを取得し変数に代入
-            String title = (String) likemap.get("title");
-            String body = (String) likemap.get("body");
-            String name = (String) likemap.get("name");
-            String uid = (String) likemap.get("uid");
-            String imageString = (String) likemap.get("image");
-            byte[] bytes;
-            if (imageString != null) {
-                bytes = Base64.decode(imageString, Base64.DEFAULT);
-            } else {
-                bytes = new byte[0];
-            }
-
             // インスタンス変数として、お気に入り一覧のuidを保持するArrayListを定義
             ArrayList<String> mLikeArrayList = new ArrayList<String>();
 
@@ -87,52 +74,11 @@ public class MainActivity extends AppCompatActivity
                     mLikeArrayList.add(likeUid);
                 }
             }
-
-            ArrayList<Answer> answerArrayList = new ArrayList<Answer>();
-            HashMap answerMap = (HashMap) likemap.get("answers");
-            if (answerMap != null) {
-                for (Object key : answerMap.keySet()) {
-                    HashMap temp = (HashMap) answerMap.get((String) key);
-                    String answerBody = (String) temp.get("body");
-                    String answerName = (String) temp.get("name");
-                    String answerUid = (String) temp.get("uid");
-                    Answer answer = new Answer(answerBody, answerName, answerUid, (String) key);
-                    answerArrayList.add(answer);
-                }
-            }
-
-            Question question = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, bytes, answerArrayList);
-            mQuestionArrayList.add(question);
-
-            // notifyDataSetChangedは、リスト全体を更新するためのメソッド。
-            mAdapter.notifyDataSetChanged();
         }
 
         @Override
-        // onChildChangedメソッドは要素に変化があった時です。今回は質問に対して回答が投稿された時に呼ばれることとなります。
         public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-            HashMap map = (HashMap) dataSnapshot.getValue();
 
-            // 変更があったQuestionを探す
-            for (Question question: mQuestionArrayList) {
-                if (dataSnapshot.getKey().equals(question.getQuestionUid())) {
-                    // このアプリで変更がある可能性があるのは回答(Answer)のみ
-                    question.getAnswers().clear();
-                    HashMap answerMap = (HashMap) map.get("answers");
-                    if (answerMap != null) {
-                        for (Object key : answerMap.keySet()) {
-                            HashMap temp = (HashMap) answerMap.get((String) key);
-                            String answerBody = (String) temp.get("body");
-                            String answerName = (String) temp.get("name");
-                            String answerUid = (String) temp.get("uid");
-                            Answer answer = new Answer(answerBody, answerName, answerUid, (String) key);
-                            question.getAnswers().add(answer);
-                        }
-                    }
-
-                    mAdapter.notifyDataSetChanged();
-                }
-            }
         }
 
         @Override
