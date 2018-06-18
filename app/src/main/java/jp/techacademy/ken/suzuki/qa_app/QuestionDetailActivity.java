@@ -2,14 +2,19 @@ package jp.techacademy.ken.suzuki.qa_app;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -19,6 +24,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,6 +35,8 @@ public class QuestionDetailActivity extends AppCompatActivity {
     private QuestionDetailListAdapter mAdapter;
 
     private DatabaseReference mAnswerRef;
+
+    // private ImageView mImageView;
 
     // お気に入りボタンの変数を定義
     private Button mLikeButton;
@@ -164,14 +172,19 @@ public class QuestionDetailActivity extends AppCompatActivity {
                     // nameをFirebaseに登録
                     data.put("name", name);
 
+                    // 添付画像を取得する
+                    // mImageView = (ImageView) findViewById(R.id.imageView);
+                    // BitmapDrawable drawable = (BitmapDrawable) mImageView.getDrawable();
 
-                    // お気に入りを保存
-                    // String like = sp.getString(Const.LikesPATH, "");
-                    // data.put("like", like);
+                    // 添付画像が設定されていれば画像を取り出してBASE64エンコードする
+                    // if (drawable != null) {
+                        //Bitmap bitmap = drawable.getBitmap();
+                        //ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        //bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
+                        //String bitmapString = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
 
-                    // 質問を保存
-                    // String content = sp.getString(Const.ContentsPATH, "");
-                    // data.put("content", content);
+                        //data.put("image", bitmapString);
+                    // }
 
                     // ボタンのTextを「解除」に変更
                     mLikeButton.setText("解除");

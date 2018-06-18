@@ -58,8 +58,11 @@ public class MainActivity extends AppCompatActivity
         @Override
         // onChildAddedメソッドが要素が追加されたとき、つまりお気に入りした質問が追加された時に呼ばれるメソッド
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+
+            // datebaseにあるデータの値をHashMapクラスに変換し変数に代入
             HashMap likemap = (HashMap) dataSnapshot.getValue();
 
+            // datebaseのデータからtitleを取得し変数に代入
             String title = (String) likemap.get("title");
             String body = (String) likemap.get("body");
             String name = (String) likemap.get("name");
@@ -70,6 +73,19 @@ public class MainActivity extends AppCompatActivity
                 bytes = Base64.decode(imageString, Base64.DEFAULT);
             } else {
                 bytes = new byte[0];
+            }
+
+            // インスタンス変数として、お気に入り一覧のuidを保持するArrayListを定義
+            ArrayList<String> mLikeArrayList = new ArrayList<String>();
+
+            // likeRefに対するリスナーで、mLikeArrayListにお気に入り一覧のuidをadd
+            HashMap likelistMap = (HashMap) likemap.get("likes");
+            if (likelistMap != null) {
+                for (Object key : likelistMap.keySet()) {
+                    HashMap liketemp = (HashMap) likelistMap.get((String) key);
+                    String likeUid = (String) liketemp.get("uid");
+                    mLikeArrayList.add(likeUid);
+                }
             }
 
             ArrayList<Answer> answerArrayList = new ArrayList<Answer>();
@@ -86,7 +102,9 @@ public class MainActivity extends AppCompatActivity
             }
 
             Question question = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, bytes, answerArrayList);
-            mLikeArrayList.add(question);
+            mQuestionArrayList.add(question);
+
+            // notifyDataSetChangedは、リスト全体を更新するためのメソッド。
             mAdapter.notifyDataSetChanged();
         }
 
@@ -133,7 +151,8 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-        private ChildEventListener mEventListener = new ChildEventListener() {
+
+    private ChildEventListener mEventListener = new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 HashMap map = (HashMap) dataSnapshot.getValue();
@@ -343,10 +362,9 @@ public class MainActivity extends AppCompatActivity
             mGenreRef.addChildEventListener(mEventListener);
             }
             else {
-            mGenreRef = mDatabaseReference.child(Const.ContentsPATH);
-            mGenreRef.addChildEventListener(mFavoriteListener);
+            // お気に入りした質問にリスナーを登録
+            likeRef.addChildEventListener(mFavoriteListener);
         }
-
 
         return true;
     }
