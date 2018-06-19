@@ -44,12 +44,7 @@ public class MainActivity extends AppCompatActivity
     private QuestionsListAdapter mAdapter;
 
     // インスタンス変数として、お気に入り一覧のuidを保持するArrayListを定義
-    ArrayList<String> qaLikeArrayList = new ArrayList<String>();
-    for (Question question: mQuestionArrayList) {
-        if (qaLikeArrayList.getKey().equals(question.getQuestionUid())) {
-            mQuestionArrayList.add(question);
-        }
-    }
+    private ArrayList<Question> qaLikeArrayList = new ArrayList<Question>();
 
     // ログイン済みのユーザーを取得する
     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -78,6 +73,15 @@ public class MainActivity extends AppCompatActivity
                     HashMap liketemp = (HashMap) likelistMap.get((String) key);
                     String likeUid = (String) liketemp.get("uid");
                     mLikeArrayList.add(likeUid);
+                }
+            }
+
+            // 全ての質問を確認
+            for (Question likeQAlist: mQuestionArrayList) {
+                // 全ての質問にお気に入りのUidが含まれていれば
+                if (mLikeArrayList.contains(likeQAlist.getQuestionUid())) {
+                    // 新しいリストの追加
+                    qaLikeArrayList.add(likeQAlist);
                 }
             }
         }
@@ -122,6 +126,7 @@ public class MainActivity extends AppCompatActivity
                     bytes = new byte[0];
                 }
 
+
                 ArrayList<Answer> answerArrayList = new ArrayList<Answer>();
                 HashMap answerMap = (HashMap) q.get("answers");
                 if (answerMap != null) {
@@ -137,6 +142,7 @@ public class MainActivity extends AppCompatActivity
 
                 Question likes = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, bytes, answerArrayList);
                 mQuestionArrayList.add(likes);
+                mAdapter.setQuestionArrayList(qaLikeArrayList);
                 mAdapter.notifyDataSetChanged();
             }
         }
