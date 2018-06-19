@@ -38,15 +38,21 @@ public class MainActivity extends AppCompatActivity
 
     private DatabaseReference mDatabaseReference;
     private DatabaseReference mGenreRef;
+    private DatabaseReference mlikeRef;
     private ListView mListView;
     private ArrayList<Question> mQuestionArrayList;
     private QuestionsListAdapter mAdapter;
 
+    // インスタンス変数として、お気に入り一覧のuidを保持するArrayListを定義
+    ArrayList<String> qaLikeArrayList = new ArrayList<String>();
+    for (Question question: mQuestionArrayList) {
+        if (qaLikeArrayList.getKey().equals(question.getQuestionUid())) {
+            mQuestionArrayList.add(question);
+        }
+    }
+
     // ログイン済みのユーザーを取得する
     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
-    // Firebaseから取得した質問のモデルクラスであるLikeのArrayList
-    private ArrayList<String> mLikeArrayList;
 
     // Firebaseを参照
     DatabaseReference dataBaseReference = FirebaseDatabase.getInstance().getReference();
@@ -97,16 +103,18 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
+    private ChildEventListener mLikeListener = new ChildEventListener() {
+        @Override
+        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            HashMap map = (HashMap) dataSnapshot.getValue();
 
-    private ChildEventListener mEventListener = new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                HashMap map = (HashMap) dataSnapshot.getValue();
-                String title = (String) map.get("title");
-                String body = (String) map.get("body");
-                String name = (String) map.get("name");
-                String uid = (String) map.get("uid");
-                String imageString = (String) map.get("image");
+            for (Object question : map.values()) {
+                HashMap q = (HashMap) question;
+                String title = (String) q.get("title");
+                String body = (String) q.get("body");
+                String name = (String) q.get("name");
+                String uid = (String) q.get("uid");
+                String imageString = (String) q.get("image");
                 byte[] bytes;
                 if (imageString != null) {
                     bytes = Base64.decode(imageString, Base64.DEFAULT);
@@ -115,7 +123,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 ArrayList<Answer> answerArrayList = new ArrayList<Answer>();
-                HashMap answerMap = (HashMap) map.get("answers");
+                HashMap answerMap = (HashMap) q.get("answers");
                 if (answerMap != null) {
                     for (Object key : answerMap.keySet()) {
                         HashMap temp = (HashMap) answerMap.get((String) key);
@@ -127,9 +135,88 @@ public class MainActivity extends AppCompatActivity
                     }
                 }
 
-                Question question = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, bytes, answerArrayList);
-                mQuestionArrayList.add(question);
+                Question likes = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, bytes, answerArrayList);
+                mQuestionArrayList.add(likes);
                 mAdapter.notifyDataSetChanged();
+            }
+        }
+
+        @Override
+        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+            HashMap map = (HashMap) dataSnapshot.getValue();
+
+            // 変更があったQuestionを探す
+            for (Question question: mQuestionArrayList) {
+                if (dataSnapshot.getKey().equals(question.getQuestionUid())) {
+                    // このアプリで変更がある可能性があるのは回答(Answer)のみ
+                    question.getAnswers().clear();
+                    HashMap answerMap = (HashMap) map.get("answers");
+                    if (answerMap != null) {
+                        for (Object key : answerMap.keySet()) {
+                            HashMap temp = (HashMap) answerMap.get((String) key);
+                            String answerBody = (String) temp.get("body");
+                            String answerName = (String) temp.get("name");
+                            String answerUid = (String) temp.get("uid");
+                            Answer answer = new Answer(answerBody, answerName, answerUid, (String) key);
+                            question.getAnswers().add(answer);
+                        }
+                    }
+
+                    mAdapter.notifyDataSetChanged();
+                }
+            }
+        }
+
+        @Override
+        public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+        }
+
+        @Override
+        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
+
+
+    private ChildEventListener mEventListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                HashMap map = (HashMap) dataSnapshot.getValue();
+
+                    String title = (String) map.get("title");
+                    String body = (String) map.get("body");
+                    String name = (String) map.get("name");
+                    String uid = (String) map.get("uid");
+                    String imageString = (String) map.get("image");
+                    byte[] bytes;
+                    if (imageString != null) {
+                        bytes = Base64.decode(imageString, Base64.DEFAULT);
+                    } else {
+                        bytes = new byte[0];
+                    }
+
+                    ArrayList<Answer> answerArrayList = new ArrayList<Answer>();
+                    HashMap answerMap = (HashMap) map.get("answers");
+                    if (answerMap != null) {
+                        for (Object key : answerMap.keySet()) {
+                            HashMap temp = (HashMap) answerMap.get((String) key);
+                            String answerBody = (String) temp.get("body");
+                            String answerName = (String) temp.get("name");
+                            String answerUid = (String) temp.get("uid");
+                            Answer answer = new Answer(answerBody, answerName, answerUid, (String) key);
+                            answerArrayList.add(answer);
+                        }
+                    }
+
+                    Question question = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, bytes, answerArrayList);
+                    mQuestionArrayList.add(question);
+                    mAdapter.notifyDataSetChanged();
             }
 
         @Override
@@ -310,6 +397,8 @@ public class MainActivity extends AppCompatActivity
             else {
             // お気に入りした質問にリスナーを登録
             likeRef.addChildEventListener(mFavoriteListener);
+            mlikeRef = mDatabaseReference.child(Const.ContentsPATH);
+            mlikeRef.addChildEventListener(mLikeListener);
         }
 
         return true;
