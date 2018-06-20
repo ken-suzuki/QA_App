@@ -118,21 +118,6 @@ public class MainActivity extends AppCompatActivity
                     bytes = new byte[0];
                 }
 
-                // 全ての質問を確認
-                for (Question likeQAlist: mQuestionArrayList) {
-
-                    Log.d("javatest", "全ての質問を確認");
-
-                    // 全ての質問にお気に入りのUidが含まれていれば
-                    if (mLikeArrayList.equals(likeQAlist.getQuestionUid())) {
-
-                        Log.d("javatest", "全ての質問にお気に入りのUidが含まれていれば");
-
-                        // 新しいリストに追加
-                        qaLikeArrayList.add(likeQAlist);
-                    }
-                }
-
                 ArrayList<Answer> answerArrayList = new ArrayList<Answer>();
                 HashMap answerMap = (HashMap) q.get("answers");
                 if (answerMap != null) {
