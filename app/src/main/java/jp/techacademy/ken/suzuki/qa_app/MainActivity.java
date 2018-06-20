@@ -44,7 +44,10 @@ public class MainActivity extends AppCompatActivity
     private QuestionsListAdapter mAdapter;
 
     // インスタンス変数として、お気に入り一覧のuidを保持するArrayListを定義
-    private ArrayList<Question> qaLikeArrayList = new ArrayList<Question>();
+    ArrayList<String> mLikeArrayList = new ArrayList<String>();
+
+    // インスタンス変数として、お気に入り一覧のuidに絞ったArrayListを定義
+    ArrayList<Question> qaLikeArrayList = new ArrayList<Question>();
 
     // ログイン済みのユーザーを取得する
     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -56,6 +59,7 @@ public class MainActivity extends AppCompatActivity
 
     // データに追加・変化があった時に受け取るChildEventListener
     private ChildEventListener mFavoriteListener = new ChildEventListener() {
+
         @Override
         // onChildAddedメソッドが要素が追加されたとき、つまりお気に入りした質問が追加された時に呼ばれるメソッド
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
@@ -63,27 +67,11 @@ public class MainActivity extends AppCompatActivity
             // datebaseにあるデータの値をHashMapクラスに変換し変数に代入
             HashMap likemap = (HashMap) dataSnapshot.getValue();
 
-            // インスタンス変数として、お気に入り一覧のuidを保持するArrayListを定義
-            ArrayList<String> mLikeArrayList = new ArrayList<String>();
+            // Firebaseからお気に入りしたuidを取得
+            String likeUid = (String) likemap.get("uid");
 
-            // likeRefに対するリスナーで、mLikeArrayListにお気に入り一覧のuidをadd
-            HashMap likelistMap = (HashMap) likemap.get("likes");
-            if (likelistMap != null) {
-                for (Object key : likelistMap.keySet()) {
-                    HashMap liketemp = (HashMap) likelistMap.get((String) key);
-                    String likeUid = (String) liketemp.get("uid");
-                    mLikeArrayList.add(likeUid);
-                }
-            }
-
-            // 全ての質問を確認
-            for (Question likeQAlist: mQuestionArrayList) {
-                // 全ての質問にお気に入りのUidが含まれていれば
-                if (mLikeArrayList.contains(likeQAlist.getQuestionUid())) {
-                    // 新しいリストの追加
-                    qaLikeArrayList.add(likeQAlist);
-                }
-            }
+            // お気に入りしたuidを質問リストに追加
+            mLikeArrayList.add(likeUid);
         }
 
         @Override
@@ -110,6 +98,10 @@ public class MainActivity extends AppCompatActivity
     private ChildEventListener mLikeListener = new ChildEventListener() {
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+
+            // mLikeListenerの確認が実行されているかの確認
+            Log.d("javatest", "mLikeListenerの確認");
+
             HashMap map = (HashMap) dataSnapshot.getValue();
 
             for (Object question : map.values()) {
@@ -126,6 +118,20 @@ public class MainActivity extends AppCompatActivity
                     bytes = new byte[0];
                 }
 
+                // 全ての質問を確認
+                for (Question likeQAlist: mQuestionArrayList) {
+
+                    Log.d("javatest", "全ての質問を確認");
+
+                    // 全ての質問にお気に入りのUidが含まれていれば
+                    if (mLikeArrayList.equals(likeQAlist.getQuestionUid())) {
+
+                        Log.d("javatest", "全ての質問にお気に入りのUidが含まれていれば");
+
+                        // 新しいリストに追加
+                        qaLikeArrayList.add(likeQAlist);
+                    }
+                }
 
                 ArrayList<Answer> answerArrayList = new ArrayList<Answer>();
                 HashMap answerMap = (HashMap) q.get("answers");
@@ -142,6 +148,23 @@ public class MainActivity extends AppCompatActivity
 
                 Question likes = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, bytes, answerArrayList);
                 mQuestionArrayList.add(likes);
+
+                // 全ての質問を確認
+                for (Question likeQAlist: mQuestionArrayList) {
+
+                    Log.d("javatest", "全ての質問を確認");
+
+                    // 全ての質問にお気に入りのUidが含まれていれば
+                    if (mLikeArrayList.contains(likeQAlist.getQuestionUid())) {
+
+                        Log.d("javatest", "全ての質問にお気に入りのUidが含まれていれば");
+
+                        // 新しいリストに追加
+                        qaLikeArrayList.add(likeQAlist);
+                    }
+                }
+
+
                 mAdapter.setQuestionArrayList(qaLikeArrayList);
                 mAdapter.notifyDataSetChanged();
             }
