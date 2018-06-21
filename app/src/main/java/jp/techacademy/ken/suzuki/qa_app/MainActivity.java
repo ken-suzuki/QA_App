@@ -55,16 +55,12 @@ public class MainActivity extends AppCompatActivity
     // Firebaseを参照
     DatabaseReference dataBaseReference = FirebaseDatabase.getInstance().getReference();
 
-    final DatabaseReference likeRef = dataBaseReference.child(Const.LikesPATH);
-
     // データに追加・変化があった時に受け取るChildEventListener
     private ChildEventListener mFavoriteListener = new ChildEventListener() {
 
         @Override
         // onChildAddedメソッドが要素が追加されたとき、つまりお気に入りした質問が追加された時に呼ばれるメソッド
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-
-            Log.d("javatest", "mFavoriteListenerの確認");
 
             // datebaseにあるデータの値をHashMapクラスに変換し変数に代入
             HashMap likemap = (HashMap) dataSnapshot.getValue();
@@ -379,83 +375,51 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (user == null) {
-
-            // Firebaseからユーザーにお気に入りされているUIDを likeRef 変数に代入。
-            // DatabaseReference likeRef = dataBaseReference.child(Const.LikesPATH);
-
-            if (id == R.id.nav_hobby) {
-                mToolbar.setTitle("趣味");
-                mGenre = 1;
-            } else if (id == R.id.nav_life) {
-                mToolbar.setTitle("生活");
-                mGenre = 2;
-            } else if (id == R.id.nav_health) {
-                mToolbar.setTitle("健康");
-                mGenre = 3;
-            } else if (id == R.id.nav_compter) {
-                mToolbar.setTitle("コンピューター");
-                mGenre = 4;
-            } else if (id == R.id.nav_like) {
-                mToolbar.setTitle("お気に入り一覧");
-                mGenre = 5;
-            }
-
-            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-            drawer.closeDrawer(GravityCompat.START);
-
-            // 質問のリストをクリアしてから再度Adapterにセットし、AdapterをListViewにセットし直す
-            mQuestionArrayList.clear();
-            mAdapter.setQuestionArrayList(mQuestionArrayList);
-            mListView.setAdapter(mAdapter);
-
-            // 選択したジャンルにリスナーを登録する
-            if (mGenreRef != null) {
-                mGenreRef.removeEventListener(mEventListener);
-            }
-
-            if (mGenre < 5) {
-                mGenreRef = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(mGenre));
-                mGenreRef.addChildEventListener(mEventListener);
-            } else {
-                // お気に入りした質問にリスナーを登録
-                likeRef.addChildEventListener(mFavoriteListener);
-                mlikeRef = mDatabaseReference.child(Const.ContentsPATH);
-                mlikeRef.addChildEventListener(mLikeListener);
-            }
-
+        if (id == R.id.nav_hobby) {
+            mToolbar.setTitle("趣味");
+            mGenre = 1;
+        } else if (id == R.id.nav_life) {
+            mToolbar.setTitle("生活");
+            mGenre = 2;
+        } else if (id == R.id.nav_health) {
+            mToolbar.setTitle("健康");
+            mGenre = 3;
+        } else if (id == R.id.nav_compter) {
+            mToolbar.setTitle("コンピューター");
+            mGenre = 4;
+        } else if (id == R.id.nav_like) {
+            mToolbar.setTitle("お気に入り一覧");
+            mGenre = 5;
         }
-        else {
-            if (id == R.id.nav_hobby) {
-                mToolbar.setTitle("趣味");
-                mGenre = 1;
-            } else if (id == R.id.nav_life) {
-                mToolbar.setTitle("生活");
-                mGenre = 2;
-            } else if (id == R.id.nav_health) {
-                mToolbar.setTitle("健康");
-                mGenre = 3;
-            } else if (id == R.id.nav_compter) {
-                mToolbar.setTitle("コンピューター");
-                mGenre = 4;
-            }
 
-            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-            drawer.closeDrawer(GravityCompat.START);
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
 
-            // --- ここから ---
-            // 質問のリストをクリアしてから再度Adapterにセットし、AdapterをListViewにセットし直す
-            mQuestionArrayList.clear();
-            mAdapter.setQuestionArrayList(mQuestionArrayList);
-            mListView.setAdapter(mAdapter);
+        // 質問のリストをクリアしてから再度Adapterにセットし、AdapterをListViewにセットし直す
+        mQuestionArrayList.clear();
+        mAdapter.setQuestionArrayList(mQuestionArrayList);
+        mListView.setAdapter(mAdapter);
 
-            // 選択したジャンルにリスナーを登録する
-            if (mGenreRef != null) {
-                mGenreRef.removeEventListener(mEventListener);
-            }
+        // 選択したジャンルにリスナーを登録する
+        if (mGenreRef != null) {
+            mGenreRef.removeEventListener(mEventListener);
+        }
+
+        if (mGenre < 5){
             mGenreRef = mDatabaseReference.child(Const.ContentsPATH).child(String.valueOf(mGenre));
             mGenreRef.addChildEventListener(mEventListener);
+            }
+            else {
+
+            // Firebaseからユーザーにお気に入りされているUIDを likeRef 変数に代入。
+            final DatabaseReference likeRef = dataBaseReference.child(Const.LikesPATH).child(user.getUid());
+
+            // お気に入りした質問にリスナーを登録
+            likeRef.addChildEventListener(mFavoriteListener);
+            mlikeRef = mDatabaseReference.child(Const.ContentsPATH);
+            mlikeRef.addChildEventListener(mLikeListener);
         }
+
         return true;
     }
 }

@@ -146,6 +146,13 @@ public class QuestionDetailActivity extends AppCompatActivity {
 
         // Firebaseを参照
         DatabaseReference dataBaseReference = FirebaseDatabase.getInstance().getReference();
+
+        // ログイン済みのユーザーを取得する
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        // ログインしている時の質問詳細画面への処理
+        if (user != null){
+
         // Firebaseからユーザーにお気に入りされている質問を likeRef 変数に代入。
         final DatabaseReference likeRef = dataBaseReference.child(Const.LikesPATH).child(user.getUid()).child(mQuestion.getQuestionUid());
         // Firebaseにお気に入りを追加するイベントリスナーを定義
@@ -203,6 +210,7 @@ public class QuestionDetailActivity extends AppCompatActivity {
                 }
             }
         });
+        }
 
         setTitle(mQuestion.getTitle());
 
