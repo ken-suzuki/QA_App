@@ -294,8 +294,6 @@ public class MainActivity extends AppCompatActivity
                     return;
                 }
 
-                // ログイン済みのユーザーを取得する
-                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
                 if (user == null) {
                     // ログインしていなければログイン画面に遷移させる
@@ -318,6 +316,10 @@ public class MainActivity extends AppCompatActivity
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+
+        Menu menu = navigationView.getMenu();
+        MenuItem item = menu.findItem(R.id.nav_like);
+
         navigationView.setNavigationItemSelectedListener(this);
 
         // Firebase
@@ -344,15 +346,31 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
 
-        // 1:趣味を既定の選択とする
-        if(mGenre == 0) {
-            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-            onNavigationItemSelected(navigationView.getMenu().getItem(0));
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        onNavigationItemSelected(navigationView.getMenu().getItem(0));
+
+        Menu menu = navigationView.getMenu();
+        MenuItem item = menu.findItem(R.id.nav_like);
+
+        // ここでログイン済みのユーザーを取得し直さないと、下記でログイン、ログアウトされているか確認できない。
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user == null) {
+            // ログインしていなければお気に入りを非表示にする
+            item.setVisible(false);
+
+            Log.d("javatest", "ログインしていないので、お気に入り一覧を非表示");
+        } else {
+            // ログインしていればお気に入りを表示する
+            item.setVisible(true);
+
+            Log.d("javatest", "ログインしているので、お気に入り一覧を表示");
         }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
@@ -367,7 +385,6 @@ public class MainActivity extends AppCompatActivity
             startActivity(intent);
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
