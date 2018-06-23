@@ -92,10 +92,16 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
 
+            // mLikeListenerの確認が実行されているかの確認
+            Log.d("javatest", "mLikeListenerを実行");
+
             HashMap map = (HashMap) dataSnapshot.getValue();
 
             // 質問のuidが参照できるようにループを回す
             for (String questionUid : (Set<String>) map.keySet()) {
+
+                Log.d("javatest", "質問のuidが参照できるようにループを回す");
+
                 HashMap q = (HashMap) map.get(questionUid);
                 String title = (String) q.get("title");
                 String body = (String) q.get("body");
@@ -126,29 +132,22 @@ public class MainActivity extends AppCompatActivity
                 Question likes = new Question(title, body, name, uid, questionUid, mGenre, bytes, answerArrayList);
                 mQuestionArrayList.add(likes);
 
-                // mLikeListenerの確認が実行されているかの確認
-                Log.d("javatest", "mLikeListenerを実行");
+                // 全ての質問にお気に入りのUidが含まれていれば
+                if (mLikeArrayList.contains(likes.getQuestionUid())) {
 
-                // 全ての質問を参照できるようにループを回す
-                for (Question likeQAlist : mQuestionArrayList) {
+                    Log.d("javatest", "質問にお気に入りのUidが含まれているか照合");
 
-                    Log.d("javatest", "全ての質問を参照できるようにループを回す");
-
-                    // 全ての質問にお気に入りのUidが含まれていれば
-                    if (mLikeArrayList.contains(likeQAlist.getQuestionUid())) {
-
-                        Log.d("javatest", "質問にお気に入りのUidが含まれているか照合");
-
-                        // 新しいリストに追加
-                        qaLikeArrayList.add(likeQAlist);
-                    }
+                    // 新しいリストに追加
+                    qaLikeArrayList.add(likes);
                 }
 
                 // 質問リストにお気に入りリストを設定
                 mAdapter.setQuestionArrayList(qaLikeArrayList);
 
+
                 // 画面に表示
                 mAdapter.notifyDataSetChanged();
+
             }
         }
 
@@ -345,25 +344,29 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        onNavigationItemSelected(navigationView.getMenu().getItem(0));
+        // 1:趣味を既定の選択とする
+        if(mGenre == 0) {
 
-        Menu menu = navigationView.getMenu();
-        MenuItem item = menu.findItem(R.id.nav_like);
+            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+            onNavigationItemSelected(navigationView.getMenu().getItem(0));
 
-        // ここでログイン済みのユーザーを取得し直さないと、下記でログイン、ログアウトされているか確認できない。
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            Menu menu = navigationView.getMenu();
+            MenuItem item = menu.findItem(R.id.nav_like);
 
-        if (user == null) {
-            // ログインしていなければお気に入りを非表示にする
-            item.setVisible(false);
+            // ここでログイン済みのユーザーを取得し直さないと、下記でログイン、ログアウトされているか確認できない。
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-            Log.d("javatest", "ログインしていないので、お気に入り一覧を非表示");
-        } else {
-            // ログインしていればお気に入りを表示する
-            item.setVisible(true);
+            if (user == null) {
+                // ログインしていなければお気に入りを非表示にする
+                item.setVisible(false);
 
-            Log.d("javatest", "ログインしているので、お気に入り一覧を表示");
+                Log.d("javatest", "ログインしていないので、お気に入り一覧を非表示");
+            } else {
+                // ログインしていればお気に入りを表示する
+                item.setVisible(true);
+
+                Log.d("javatest", "ログインしているので、お気に入り一覧を表示");
+            }
         }
     }
 
@@ -389,6 +392,10 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
+
+        // ここでログイン済みのユーザーを取得し直さないと、下記でログイン、ログアウトされているか確認できない。
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
         int id = item.getItemId();
 
         if (id == R.id.nav_hobby) {
@@ -426,6 +433,11 @@ public class MainActivity extends AppCompatActivity
             mGenreRef.addChildEventListener(mEventListener);
             }
             else {
+
+            qaLikeArrayList.clear();
+            // 質問リストにお気に入りリストを設定
+            mAdapter.setQuestionArrayList(qaLikeArrayList);
+            mListView.setAdapter(mAdapter);
 
             // Firebaseからユーザーにお気に入りされているUIDを likeRef 変数に代入。
             final DatabaseReference likeRef = dataBaseReference.child(Const.LikesPATH).child(user.getUid());
