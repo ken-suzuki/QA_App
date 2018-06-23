@@ -28,6 +28,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -45,13 +46,10 @@ public class MainActivity extends AppCompatActivity
 
     // インスタンス変数として、お気に入り一覧のuidを保持するArrayListを定義
     ArrayList<String> mLikeArrayList = new ArrayList<String>();
-
     // インスタンス変数として、お気に入り一覧のuidに絞ったArrayListを定義
     ArrayList<Question> qaLikeArrayList = new ArrayList<Question>();
-
     // ログイン済みのユーザーを取得する
     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
     // Firebaseを参照
     DatabaseReference dataBaseReference = FirebaseDatabase.getInstance().getReference();
 
@@ -62,14 +60,10 @@ public class MainActivity extends AppCompatActivity
         // onChildAddedメソッドが要素が追加されたとき、つまりお気に入りした質問が追加された時に呼ばれるメソッド
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
 
-            // datebaseにあるデータの値をHashMapクラスに変換し変数に代入
-            HashMap likemap = (HashMap) dataSnapshot.getValue();
+            // お気に入りリストにdatabaseのkeyを追加
+            mLikeArrayList.add(dataSnapshot.getKey());
 
-            // Firebaseからお気に入りしたuidを取得
-            String likeUid = (String) likemap.get("uid");
-
-            // お気に入りしたuidを質問リストに追加
-            mLikeArrayList.add(likeUid);
+            Log.d("javatest", "mFavoriteListenerを実行");
         }
 
         @Override
@@ -93,18 +87,16 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
+    // 全ての質問とお気に入りした質問のuidを照合して、ListViewに表示するListener
     private ChildEventListener mLikeListener = new ChildEventListener() {
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
 
-            // mLikeListenerの確認が実行されているかの確認
-            Log.d("javatest", "mLikeListenerの確認");
-
             HashMap map = (HashMap) dataSnapshot.getValue();
 
-            // 全ての質問を取得
-            for (Object question : map.values()) {
-                HashMap q = (HashMap) question;
+            // 質問のuidが参照できるようにループを回す
+            for (String questionUid : (Set<String>) map.keySet()) {
+                HashMap q = (HashMap) map.get(questionUid);
                 String title = (String) q.get("title");
                 String body = (String) q.get("body");
                 String name = (String) q.get("name");
@@ -130,18 +122,22 @@ public class MainActivity extends AppCompatActivity
                     }
                 }
 
-                Question likes = new Question(title, body, name, uid, dataSnapshot.getKey(), mGenre, bytes, answerArrayList);
+                // Question likesを作るときに、questionUidをコンストラクタに指定する
+                Question likes = new Question(title, body, name, uid, questionUid, mGenre, bytes, answerArrayList);
                 mQuestionArrayList.add(likes);
 
-                // 全ての質問を確認
-                for (Question likeQAlist: mQuestionArrayList) {
+                // mLikeListenerの確認が実行されているかの確認
+                Log.d("javatest", "mLikeListenerを実行");
 
-                    Log.d("javatest", "全ての質問を確認");
+                // 全ての質問を参照できるようにループを回す
+                for (Question likeQAlist : mQuestionArrayList) {
+
+                    Log.d("javatest", "全ての質問を参照できるようにループを回す");
 
                     // 全ての質問にお気に入りのUidが含まれていれば
                     if (mLikeArrayList.contains(likeQAlist.getQuestionUid())) {
 
-                        Log.d("javatest", "全ての質問にお気に入りのUidが含まれていれば");
+                        Log.d("javatest", "質問にお気に入りのUidが含まれているか照合");
 
                         // 新しいリストに追加
                         qaLikeArrayList.add(likeQAlist);
@@ -293,6 +289,9 @@ public class MainActivity extends AppCompatActivity
                     Snackbar.make(view, "ジャンルを選択して下さい", Snackbar.LENGTH_LONG).show();
                     return;
                 }
+
+                // ここでログイン済みのユーザーを取得し直さないと、下記でログイン、ログアウトされているか確認できない。
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
 
                 if (user == null) {
