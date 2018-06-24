@@ -339,8 +339,9 @@ public class MainActivity extends AppCompatActivity
                 Intent intent = new Intent(getApplicationContext(), QuestionDetailActivity.class);
                 intent.putExtra("question", mQuestionArrayList.get(position));
 
-                Question question = mQuestionArrayList.get(position);
-                Log.d("javatest", String.valueOf(position));
+                // questionのuidを確認
+                //Question question = mQuestionArrayList.get(position);
+                //Log.d("javatest", String.valueOf(position));
 
                 startActivity(intent);
             }
