@@ -103,6 +103,11 @@ public class MainActivity extends AppCompatActivity
                 Log.d("javatest", "質問のuidが参照できるようにループを回す");
 
                 HashMap q = (HashMap) map.get(questionUid);
+
+                // questionUidyと中身をLogで確認
+                //Log.d("javatest", String.valueOf(questionUid));
+                //Log.d("javatest", String.valueOf(q));
+
                 String title = (String) q.get("title");
                 String body = (String) q.get("body");
                 String name = (String) q.get("name");
@@ -144,10 +149,8 @@ public class MainActivity extends AppCompatActivity
                 // 質問リストにお気に入りリストを設定
                 mAdapter.setQuestionArrayList(qaLikeArrayList);
 
-
                 // 画面に表示
                 mAdapter.notifyDataSetChanged();
-
             }
         }
 
@@ -335,6 +338,10 @@ public class MainActivity extends AppCompatActivity
                 // Questionのインスタンスを渡して質問詳細画面を起動する
                 Intent intent = new Intent(getApplicationContext(), QuestionDetailActivity.class);
                 intent.putExtra("question", mQuestionArrayList.get(position));
+
+                Question question = mQuestionArrayList.get(position);
+                Log.d("javatest", String.valueOf(position));
+
                 startActivity(intent);
             }
         });
@@ -364,6 +371,7 @@ public class MainActivity extends AppCompatActivity
             } else {
                 // ログインしていればお気に入りを表示する
                 item.setVisible(true);
+
 
                 Log.d("javatest", "ログインしているので、お気に入り一覧を表示");
             }
@@ -434,6 +442,7 @@ public class MainActivity extends AppCompatActivity
             }
             else {
 
+            // お気に入り一覧のリストをクリアしてから再度Adapterにセットし、AdapterをListViewにセットし直す
             qaLikeArrayList.clear();
             // 質問リストにお気に入りリストを設定
             mAdapter.setQuestionArrayList(qaLikeArrayList);
