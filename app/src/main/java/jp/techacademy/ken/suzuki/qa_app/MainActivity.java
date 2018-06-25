@@ -361,8 +361,9 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
 
-            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-
+        // Firebase
+        mDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 
         // 1:趣味を既定の選択とする
         if(mGenre == 0) {
@@ -443,8 +444,15 @@ public class MainActivity extends AppCompatActivity
         mListView.setAdapter(mAdapter);
 
         // 選択したジャンルにリスナーを登録する
-        if (mGenreRef != null) {
-            mGenreRef.removeEventListener(mEventListener);
+        if (mGenre < 5) {
+            if (mGenreRef != null) {
+                mGenreRef.removeEventListener(mEventListener);
+            }
+        }
+        if (mGenre == 5) {
+            if (mlikeRef != null) {
+                mlikeRef.removeEventListener(mLikeListener);
+            }
         }
 
         if (mGenre < 5){

@@ -131,6 +131,9 @@ public class QuestionDetailActivity extends AppCompatActivity {
 
         // 渡ってきたQuestionのオブジェクトを保持する
         Bundle extras = getIntent().getExtras();
+
+        Log.d("javatest", String.valueOf(extras));
+
         mQuestion = (Question) extras.get("question");
 
         // お気に入りボタンの設定
