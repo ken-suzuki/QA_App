@@ -326,21 +326,30 @@ public class MainActivity extends AppCompatActivity
         // Firebase
         mDatabaseReference = FirebaseDatabase.getInstance().getReference();
 
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
         // ListViewの準備
         mListView = (ListView) findViewById(R.id.listView);
         mAdapter = new QuestionsListAdapter(this);
         mQuestionArrayList = new ArrayList<Question>();
         mAdapter.notifyDataSetChanged();
 
+        // 質問一覧から質問詳細画面へ遷移する際のClickListener
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // Questionのインスタンスを渡して質問詳細画面を起動する
                 Intent intent = new Intent(getApplicationContext(), QuestionDetailActivity.class);
-                intent.putExtra("question", mQuestionArrayList.get(position));
+
+                if(mGenre == 5) {
+                    intent.putExtra("question", qaLikeArrayList.get(position));
+                }
+                else{
+                    intent.putExtra("question", mQuestionArrayList.get(position));
+                }
 
                 // questionのuidを確認
-                //Question question = mQuestionArrayList.get(position);
+                //Question question = qaLikeArrayList.get(position);
                 //Log.d("javatest", String.valueOf(position));
 
                 startActivity(intent);
@@ -352,11 +361,13 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
 
-        // 1:趣味を既定の選択とする
-        //if(mGenre == 0) {
-
             NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+
+
+        // 1:趣味を既定の選択とする
+        if(mGenre == 0) {
             onNavigationItemSelected(navigationView.getMenu().getItem(0));
+            }
 
             Menu menu = navigationView.getMenu();
             MenuItem item = menu.findItem(R.id.nav_like);
@@ -376,7 +387,6 @@ public class MainActivity extends AppCompatActivity
 
                 Log.d("javatest", "ログインしているので、お気に入り一覧を表示");
             }
-        //}
     }
 
     @Override
