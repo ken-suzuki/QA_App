@@ -353,7 +353,7 @@ public class MainActivity extends AppCompatActivity
         super.onResume();
 
         // 1:趣味を既定の選択とする
-        if(mGenre == 0) {
+        //if(mGenre == 0) {
 
             NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
             onNavigationItemSelected(navigationView.getMenu().getItem(0));
@@ -376,7 +376,7 @@ public class MainActivity extends AppCompatActivity
 
                 Log.d("javatest", "ログインしているので、お気に入り一覧を表示");
             }
-        }
+        //}
     }
 
     @Override
