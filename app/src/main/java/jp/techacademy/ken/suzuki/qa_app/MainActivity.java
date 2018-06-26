@@ -364,55 +364,85 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
 
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        // ここでログイン済みのユーザーを取得し直さないと、下記でログイン、ログアウトされているか確認できない。
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        // 1:趣味を既定の選択とする
+        if(mGenre == 0) {
+            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+            onNavigationItemSelected(navigationView.getMenu().getItem(0));
+        }
+
+        /* mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
 
         // ナビゲーションドロワーの設定
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, mToolbar, R.string.app_name, R.string.app_name);
         drawer.addDrawerListener(toggle);
-        toggle.syncState();
+        toggle.syncState(); */
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 
-            // 1:趣味を既定の選択とする（この設定がないと質問詳細画面から戻る時に趣味が選択されてしまうため）
-            if(mGenre == 0) {
-            onNavigationItemSelected(navigationView.getMenu().getItem(0));
-            }
+        Menu menu = navigationView.getMenu();
+        MenuItem item = menu.findItem(R.id.nav_like);
 
-            Menu menu = navigationView.getMenu();
-            MenuItem item = menu.findItem(R.id.nav_like);
+        if (user == null) {
+            // ログインしていなければお気に入りを非表示にする
+            item.setVisible(false);
 
-            // ここでログイン済みのユーザーを取得し直さないと、下記でログイン、ログアウトされているか確認できない。
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
-            if (user == null) {
-                // ログインしていなければお気に入りを非表示にする
-                item.setVisible(false);
-
-                Log.d("javatest", "ログインしていないので、お気に入り一覧を非表示");
-            } else {
-                // ログインしていればお気に入りを表示する
-                item.setVisible(true);
+            Log.d("javatest", "ログインしていないので、お気に入り一覧を非表示");
+        } else {
+            // ログインしていればお気に入りを表示する
+            item.setVisible(true);
 
 
-                Log.d("javatest", "ログインしているので、お気に入り一覧を表示");
-            }
+            Log.d("javatest", "ログインしているので、お気に入り一覧を表示");
+        }
 
-        navigationView.setNavigationItemSelectedListener(this);
+        /* navigationView.setNavigationItemSelectedListener(this);
 
         // Firebase
         mDatabaseReference = FirebaseDatabase.getInstance().getReference();
+
 
         // ListViewの準備
         mListView = (ListView) findViewById(R.id.listView);
         mAdapter = new QuestionsListAdapter(this);
         mQuestionArrayList = new ArrayList<Question>();
 
-        mAdapter.notifyDataSetChanged();
+        mAdapter.notifyDataSetChanged(); */
+
+        // お気に入り一覧から質問を解除した後に戻る時の処理（お気に入り一覧をクリックした時の処理と同じ）
+        if (mGenre == 5 && user != null) {
+
+            // mLikeArrayListを初期化（ここで初期化するのがポイント）
+            mLikeArrayList = new ArrayList<String>();
+
+            // お気に入り一覧のリストをクリアしてから再度Adapterにセットし、AdapterをListViewにセットし直す
+            qaLikeArrayList.clear();
+            // 質問リストにお気に入りリストを設定
+            mAdapter.setQuestionArrayList(qaLikeArrayList);
+            mListView.setAdapter(mAdapter);
+
+            // Firebaseからユーザーにお気に入りされているUIDを likeRef 変数に代入。
+            final DatabaseReference likeRef = dataBaseReference.child(Const.LikesPATH).child(user.getUid());
+
+            // お気に入りした質問にリスナーを登録
+            likeRef.addChildEventListener(mFavoriteListener);
+            mlikeRef = mDatabaseReference.child(Const.ContentsPATH);
+            mlikeRef.addChildEventListener(mLikeListener);
+
+            // お気に入り一覧からログアウトした後に戻る時の処理
+        } else if (mGenre == 5 && user == null){
+            // ログインしていない場合は，お気に入りのリストをクリア
+            qaLikeArrayList.clear();
+            // お気に入り一覧が表示されないように趣味を選択
+            onNavigationItemSelected(navigationView.getMenu().getItem(0));
+        }
 
         // 質問一覧から質問詳細画面へ遷移する際のClickListener
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        /* mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // Questionのインスタンスを渡して質問詳細画面を起動する
@@ -433,7 +463,7 @@ public class MainActivity extends AppCompatActivity
 
                 startActivity(intent);
             }
-        });
+        }); */
     }
 
     @Override
@@ -462,7 +492,7 @@ public class MainActivity extends AppCompatActivity
         // ここでログイン済みのユーザーを取得し直さないと、下記でログイン、ログアウトされているか確認できない。
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-        // mLikeArrayListを初期化
+        // mLikeArrayListを初期化（初期化をしないとmLikeArrayListの要素がどんどん追加され、同じUIDまで追加してしまうため）
         mLikeArrayList = new ArrayList<String>();
 
         int id = item.getItemId();
