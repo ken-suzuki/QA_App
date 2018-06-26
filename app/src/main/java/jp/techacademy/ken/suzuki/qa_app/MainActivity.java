@@ -332,6 +332,7 @@ public class MainActivity extends AppCompatActivity
         mListView = (ListView) findViewById(R.id.listView);
         mAdapter = new QuestionsListAdapter(this);
         mQuestionArrayList = new ArrayList<Question>();
+
         mAdapter.notifyDataSetChanged();
 
         // 質問一覧から質問詳細画面へ遷移する際のClickListener
@@ -341,9 +342,11 @@ public class MainActivity extends AppCompatActivity
                 // Questionのインスタンスを渡して質問詳細画面を起動する
                 Intent intent = new Intent(getApplicationContext(), QuestionDetailActivity.class);
 
+                // ジャンル別に一覧から遷移する質問詳細画面のリストを設定
                 if(mGenre == 5) {
                     intent.putExtra("question", qaLikeArrayList.get(position));
                 }
+                // お気に入り一覧は下記を設定
                 else{
                     intent.putExtra("question", mQuestionArrayList.get(position));
                 }
@@ -361,12 +364,19 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
 
-        // Firebase
-        mDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
+
+        // ナビゲーションドロワーの設定
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, mToolbar, R.string.app_name, R.string.app_name);
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 
-        // 1:趣味を既定の選択とする
-        if(mGenre == 0) {
+            // 1:趣味を既定の選択とする（この設定がないと質問詳細画面から戻る時に趣味が選択されてしまうため）
+            if(mGenre == 0) {
             onNavigationItemSelected(navigationView.getMenu().getItem(0));
             }
 
@@ -388,6 +398,42 @@ public class MainActivity extends AppCompatActivity
 
                 Log.d("javatest", "ログインしているので、お気に入り一覧を表示");
             }
+
+        navigationView.setNavigationItemSelectedListener(this);
+
+        // Firebase
+        mDatabaseReference = FirebaseDatabase.getInstance().getReference();
+
+        // ListViewの準備
+        mListView = (ListView) findViewById(R.id.listView);
+        mAdapter = new QuestionsListAdapter(this);
+        mQuestionArrayList = new ArrayList<Question>();
+
+        mAdapter.notifyDataSetChanged();
+
+        // 質問一覧から質問詳細画面へ遷移する際のClickListener
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                // Questionのインスタンスを渡して質問詳細画面を起動する
+                Intent intent = new Intent(getApplicationContext(), QuestionDetailActivity.class);
+
+                // ジャンル別に一覧から遷移する質問詳細画面のリストを設定
+                if(mGenre == 5) {
+                    intent.putExtra("question", qaLikeArrayList.get(position));
+                }
+                // お気に入り一覧は下記を設定
+                else{
+                    intent.putExtra("question", mQuestionArrayList.get(position));
+                }
+
+                // questionのuidを確認
+                //Question question = qaLikeArrayList.get(position);
+                //Log.d("javatest", String.valueOf(position));
+
+                startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -415,6 +461,9 @@ public class MainActivity extends AppCompatActivity
 
         // ここでログイン済みのユーザーを取得し直さないと、下記でログイン、ログアウトされているか確認できない。
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        // mLikeArrayListを初期化
+        mLikeArrayList = new ArrayList<String>();
 
         int id = item.getItemId();
 
